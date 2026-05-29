@@ -20,6 +20,12 @@ Requires [uv](https://github.com/astral-sh/uv).
 uv tool install https://github.com/ogpourya/etchost.git
 ```
 
+Then make it available to `sudo`:
+
+```sh
+sudo ln -s $(which etchost) /usr/local/bin/etchost
+```
+
 > Must be run as root to modify `/etc/hosts`.
 
 ---
