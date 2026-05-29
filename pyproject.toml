@@ -1,0 +1,7 @@
+[project]
+name = "etchost"
+version = "0.1.0"
+description = "A tiny Python CLI that temporarily maps a domain to an IP in `/etc/hosts` for one command."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
