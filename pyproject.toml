@@ -5,3 +5,6 @@ description = "A tiny Python CLI that temporarily maps a domain to an IP in `/et
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
+
+[project.scripts]
+etchost = "etchost:main"
