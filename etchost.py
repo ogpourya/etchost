@@ -36,6 +36,8 @@ def _read_hosts(path: Path) -> str:
 
 
 def _write_hosts(path: Path, content: str) -> None:
+    if not content:
+        raise RuntimeError(f"refusing to write empty content to {path}")
     if os.geteuid() == 0:
         atomic_write(path, content)
         return
