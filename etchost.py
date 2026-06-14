@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import atexit
+import base64
 import fcntl
 import ipaddress
 import os
@@ -16,12 +17,38 @@ from pathlib import Path
 
 TOOL_NAME = "etchost"
 HOSTS_FILE = Path("/etc/hosts")
-LOCK_FILE = Path("/run/lock/etchost-hosts.lock")
+LOCK_FILE = Path("/tmp/etchost-hosts.lock")
 USAGE = "etchost domain=ip [domain=ip ...] [--] command [args ...]"
 
 _current_patch: "HostsPatch | None" = None
 _child: "subprocess.Popen | None" = None
 _received_signal: "int | None" = None
+
+
+def _read_hosts(path: Path) -> str:
+    if os.geteuid() == 0:
+        return path.read_text()
+    result = subprocess.run(
+        ["sudo", "cat", str(path)],
+        capture_output=True, text=True, check=True,
+    )
+    return result.stdout
+
+
+def _write_hosts(path: Path, content: str) -> None:
+    if os.geteuid() == 0:
+        atomic_write(path, content)
+        return
+    encoded = base64.b64encode(content.encode()).decode()
+    subprocess.run(
+        ["sudo", "sh", "-c",
+         f"tmp=$(mktemp -p /etc .etchost.XXXXXX) && "
+         f"printf '%s' '{encoded}' | base64 -d -o \"$tmp\" && "
+         f"chmod 644 \"$tmp\" && "
+         f"chown root:root \"$tmp\" 2>/dev/null || true && "
+         f"mv \"$tmp\" \"{path}\""],
+        check=True,
+    )
 
 
 def is_valid_hostname(name: str) -> bool:
@@ -68,27 +95,27 @@ class HostsPatch:
         return lines
 
     def apply(self) -> None:
-        content = self.hosts_file.read_text()
+        content = _read_hosts(self.hosts_file)
         self._had_trailing_newline = content.endswith("\n") or content == ""
         body = content
         if body and not body.endswith("\n"):
             body += "\n"
         body += "\n".join(self.lines) + "\n"
-        atomic_write(self.hosts_file, body)
+        _write_hosts(self.hosts_file, body)
         self.applied = True
 
     def restore(self) -> None:
         if not self.applied:
             return
         try:
-            content = self.hosts_file.read_text()
+            content = _read_hosts(self.hosts_file)
             kept = [line for line in content.split("\n") if self.marker not in line]
             if kept and kept[-1] == "":
                 kept = kept[:-1]
             restored = "\n".join(kept)
             if restored and self._had_trailing_newline:
                 restored += "\n"
-            atomic_write(self.hosts_file, restored)
+            _write_hosts(self.hosts_file, restored)
         finally:
             self.applied = False
 
@@ -199,10 +226,6 @@ def main() -> int:
         except ValueError as error:
             print(f"{TOOL_NAME}: {error}", file=sys.stderr)
             return 2
-
-        if os.geteuid() != 0:
-            print(f"{TOOL_NAME}: must run as root to modify {HOSTS_FILE}", file=sys.stderr)
-            return 1
 
         try:
             patch = HostsPatch(HOSTS_FILE, mappings)
