@@ -10,6 +10,8 @@ No leftover state. No manual cleanup. Safe for concurrent use.
 
 `etchost` patches `/etc/hosts` before your command starts and restores the original file after it exits — even on crash, interrupt, or signal. It uses a file lock so multiple instances running in parallel won't clobber each other.
 
+No `sudo` prefix needed — `etchost` calls `sudo` internally **only** for the brief moment it reads or writes `/etc/hosts`. Your command runs as your regular user.
+
 ---
 
 ## Installation
