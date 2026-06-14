@@ -17,7 +17,7 @@ from pathlib import Path
 
 TOOL_NAME = "etchost"
 HOSTS_FILE = Path("/etc/hosts")
-LOCK_FILE = Path("/tmp/etchost-hosts.lock")
+LOCK_FILE = Path("/run/lock/etchost-hosts.lock" if os.geteuid() == 0 else "/tmp/etchost-hosts.lock")
 USAGE = "etchost domain=ip [domain=ip ...] [--] command [args ...]"
 
 _current_patch: "HostsPatch | None" = None

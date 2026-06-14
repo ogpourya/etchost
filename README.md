@@ -82,7 +82,7 @@ etchost debug.local=127.0.0.1 -- cat /etc/hosts
 - Validates hostnames strictly (RFC-compliant)
 - Uses atomic writes to avoid partial file states
 - Cleans up on `SIGINT`, `SIGTERM`, `SIGHUP`, and normal exit
-- Lock file lives at `/tmp/etchost-hosts.lock`
+- Lock file lives at `/run/lock/etchost-hosts.lock` (root) or `/tmp/etchost-hosts.lock` (non-root)
 - Uses `sudo` only for reading and writing `/etc/hosts`; the child command runs as your user, not root
 
 ---
