@@ -43,9 +43,8 @@ def _write_hosts(path: Path, content: str) -> None:
     subprocess.run(
         ["sudo", "sh", "-c",
          f"tmp=$(mktemp -p /etc .etchost.XXXXXX) && "
-         f"printf '%s' '{encoded}' | base64 -d -o \"$tmp\" && "
+         f"printf '%s' '{encoded}' | base64 -d > \"$tmp\" && "
          f"chmod 644 \"$tmp\" && "
-         f"chown root:root \"$tmp\" 2>/dev/null || true && "
          f"mv \"$tmp\" \"{path}\""],
         check=True,
     )
